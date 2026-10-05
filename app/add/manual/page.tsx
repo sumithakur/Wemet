@@ -1,12 +1,13 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import LocationAndEventTracker from "@/components/capture/LocationAndEventTracker";
 
-export default function AddManualPage() {
+function ManualForm() {
   const searchParams = useSearchParams();
   const qr = searchParams.get('qr') || '';
   
@@ -55,9 +56,7 @@ export default function AddManualPage() {
   }
 
   return (
-    <div className="p-4 max-w-xl mx-auto flex flex-col gap-6 mt-6 pb-20">
-      <h1 className="text-2xl font-bold text-gray-900">Type details</h1>
-      
+    <>
       {qr && (
         <div className="bg-green-50 text-green-800 p-3 rounded-xl border border-green-200 text-sm">
           {defaultFirstName || defaultWebsite ? '✓ Parsed details from QR code' : 'QR Code detected. Please verify details.'}
@@ -110,6 +109,17 @@ export default function AddManualPage() {
         
         <Button type="submit" size="lg" className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-xl h-14 mt-4">Save Contact</Button>
       </form>
+    </>
+  );
+}
+
+export default function AddManualPage() {
+  return (
+    <div className="p-4 max-w-xl mx-auto flex flex-col gap-6 mt-6 pb-20">
+      <h1 className="text-2xl font-bold text-gray-900">Type details</h1>
+      <Suspense fallback={<div className="animate-pulse h-64 bg-gray-100 rounded-xl"></div>}>
+        <ManualForm />
+      </Suspense>
     </div>
   );
 }
