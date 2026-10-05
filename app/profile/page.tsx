@@ -36,10 +36,10 @@ export default async function ProfilePage() {
           </div>
           
           <div className="flex gap-3 mt-4 w-full">
-            <Button asChild className="flex-1 bg-gray-900 hover:bg-gray-800 text-white rounded-xl">
+            <Button  className="flex-1 bg-gray-900 hover:bg-gray-800 text-white rounded-xl">
               <Link href="/profile/share">Share QR</Link>
             </Button>
-            <Button asChild variant="outline" className="flex-1 rounded-xl">
+            <Button  variant="outline" className="flex-1 rounded-xl">
               <Link href="/profile/edit">Edit Profile</Link>
             </Button>
           </div>

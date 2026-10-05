@@ -60,17 +60,17 @@ export default async function ContactDetailPage({ params }: { params: { id: stri
 
         <div className="flex flex-wrap justify-center gap-3 mt-4 w-full">
           {contact.phone && (
-            <Button asChild variant="outline" size="sm" className="rounded-full">
+            <Button  variant="outline" size="sm" className="rounded-full">
               <a href={`tel:${contact.phone}`}>📞 Call</a>
             </Button>
           )}
           {contact.email && (
-            <Button asChild variant="outline" size="sm" className="rounded-full">
+            <Button  variant="outline" size="sm" className="rounded-full">
               <a href={`mailto:${contact.email}`}>✉️ Email</a>
             </Button>
           )}
           {contact.linkedin_url && (
-            <Button asChild variant="outline" size="sm" className="rounded-full">
+            <Button  variant="outline" size="sm" className="rounded-full">
               <a href={contact.linkedin_url} target="_blank">in LinkedIn</a>
             </Button>
           )}

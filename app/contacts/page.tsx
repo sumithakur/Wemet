@@ -48,7 +48,7 @@ export default async function ContactsPage({
         <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
         <div className="flex gap-2">
           <ExportButton data={exportData} />
-          <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-700">
+          <Button  size="sm" className="bg-blue-600 hover:bg-blue-700">
             <Link href="/add">+ Add</Link>
           </Button>
         </div>

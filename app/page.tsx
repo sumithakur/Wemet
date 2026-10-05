@@ -29,7 +29,7 @@ export default async function Home() {
           A minimalist tool to capture who you met, where you met them, and what you talked about. In under 30 seconds.
         </p>
         <div className="flex w-full sm:w-auto">
-          <Button asChild className="h-14 px-10 text-base w-full sm:w-auto rounded-full bg-gray-900 text-white hover:bg-gray-800 shadow-md">
+          <Button  className="h-14 px-10 text-base w-full sm:w-auto rounded-full bg-gray-900 text-white hover:bg-gray-800 shadow-md">
             <Link href="/signup">Start Remembering</Link>
           </Button>
         </div>

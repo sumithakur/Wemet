@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   
   // Remove the floating Next.js build indicator
   devIndicators: {
-    appIsrStatus: false,
+    
     buildActivity: false,
   },
 };
