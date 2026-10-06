@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { deleteContact } from './actions';
 
@@ -79,9 +79,7 @@ export default async function ContactDetailPage({ params }: { params: any }) {
             </Button>
           )}
           {contact.linkedin_url && (
-            <Button variant="outline" size="sm" className="rounded-full">
-              <a href={contact.linkedin_url} target="_blank">in LinkedIn</a>
-            </Button>
+            <a href={contact.linkedin_url} target="_blank" className={buttonVariants({ variant: "outline", size: "sm", className: "rounded-full" })}>in LinkedIn</a>
           )}
         </div>
       </div>
