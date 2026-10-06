@@ -29,7 +29,7 @@ export default function CardScannerPage() {
       });
       
       await worker.setParameters({
-        tessedit_pageseg_mode: 11, // Sparse text mode (find as much text as possible in no particular order)
+        tessedit_pageseg_mode: 11 as any, // Sparse text mode (find as much text as possible in no particular order)
       });
       
       setProgress('Analyzing business card...');

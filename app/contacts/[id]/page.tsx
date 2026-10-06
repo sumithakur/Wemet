@@ -3,9 +3,12 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import Image from 'next/image';
+import { deleteContact } from './actions';
 
-export default async function ContactDetailPage({ params }: { params: { id: string } }) {
+export default async function ContactDetailPage({ params }: { params: any }) {
+  // Fix Next.js 15+ promise based params
+  const { id } = await params;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -14,7 +17,7 @@ export default async function ContactDetailPage({ params }: { params: { id: stri
   const { data: contact } = await supabase
     .from('contacts')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('owner_id', user.id)
     .single();
 
@@ -23,16 +26,14 @@ export default async function ContactDetailPage({ params }: { params: { id: stri
   const { data: interactions } = await supabase
     .from('interactions')
     .select('*')
-    .eq('contact_id', params.id)
+    .eq('contact_id', id)
     .order('occurred_at', { ascending: false });
 
   const { data: assets } = await supabase
     .from('contact_assets')
     .select('*')
-    .eq('contact_id', params.id);
+    .eq('contact_id', id);
 
-  // Generate public URLs for the images (assuming bucket 'cards' is public or we generate signed URLs)
-  // We'll generate signed URLs to be safe for private buckets
   let imageUrls: string[] = [];
   if (assets && assets.length > 0) {
     for (const asset of assets) {
@@ -43,10 +44,18 @@ export default async function ContactDetailPage({ params }: { params: { id: stri
     }
   }
 
+  // Server action binding for delete
+  const deleteAction = deleteContact.bind(null, id);
+
   return (
-    <div className="p-4 max-w-2xl mx-auto flex flex-col gap-6 mt-6">
-      <div className="flex items-center gap-2 mb-2">
+    <div className="p-4 max-w-2xl mx-auto flex flex-col gap-6 mt-6 pb-20">
+      <div className="flex justify-between items-center mb-2">
         <Link href="/contacts" className="text-blue-600 text-sm hover:underline font-medium">← Back to Contacts</Link>
+        <form action={deleteAction}>
+          <Button type="submit" variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 text-xs font-medium">
+            🗑️ Delete Contact
+          </Button>
+        </form>
       </div>
 
       <div className="flex flex-col items-center text-center gap-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -60,17 +69,17 @@ export default async function ContactDetailPage({ params }: { params: { id: stri
 
         <div className="flex flex-wrap justify-center gap-3 mt-4 w-full">
           {contact.phone && (
-            <Button  variant="outline" size="sm" className="rounded-full">
+            <Button variant="outline" size="sm" className="rounded-full">
               <a href={`tel:${contact.phone}`}>📞 Call</a>
             </Button>
           )}
           {contact.email && (
-            <Button  variant="outline" size="sm" className="rounded-full">
+            <Button variant="outline" size="sm" className="rounded-full">
               <a href={`mailto:${contact.email}`}>✉️ Email</a>
             </Button>
           )}
           {contact.linkedin_url && (
-            <Button  variant="outline" size="sm" className="rounded-full">
+            <Button variant="outline" size="sm" className="rounded-full">
               <a href={contact.linkedin_url} target="_blank">in LinkedIn</a>
             </Button>
           )}
@@ -93,7 +102,7 @@ export default async function ContactDetailPage({ params }: { params: { id: stri
       <div className="mt-4">
         <div className="flex justify-between items-center border-b pb-2 mb-4">
           <h2 className="text-sm uppercase tracking-wider font-bold text-gray-500">Interaction History</h2>
-          <Button variant="ghost" size="sm" className="text-blue-600 text-xs h-8">
+          <Button variant="ghost" size="sm" className="text-blue-600 text-xs h-8 pointer-events-none opacity-50">
             + Add Note
           </Button>
         </div>

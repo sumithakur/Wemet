@@ -9,8 +9,9 @@ import ExportButton from '@/components/contacts/ExportButton';
 export default async function ContactsPage({
   searchParams,
 }: {
-  searchParams: { q?: string; event?: string; date?: string };
+  searchParams: any;
 }) {
+  const resolvedParams = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -25,8 +26,8 @@ export default async function ContactsPage({
     .eq('owner_id', user.id)
     .order('first_name', { ascending: true });
 
-  if (searchParams.q) {
-    const searchTerm = `%${searchParams.q}%`;
+  if (resolvedParams.q) {
+    const searchTerm = `%${resolvedParams.q}%`;
     query = query.or(`first_name.ilike.${searchTerm},last_name.ilike.${searchTerm},company.ilike.${searchTerm},job_title.ilike.${searchTerm}`);
   }
 
@@ -43,12 +44,12 @@ export default async function ContactsPage({
   })) || [];
 
   return (
-    <div className="p-4 max-w-2xl mx-auto flex flex-col gap-6 mt-6">
+    <div className="p-4 max-w-2xl mx-auto flex flex-col gap-6 mt-6 pb-20">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
         <div className="flex gap-2">
           <ExportButton data={exportData} />
-          <Button  size="sm" className="bg-blue-600 hover:bg-blue-700">
+          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-9" >
             <Link href="/add">+ Add</Link>
           </Button>
         </div>
@@ -58,11 +59,11 @@ export default async function ContactsPage({
       <form className="flex flex-col sm:flex-row gap-3 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
         <Input 
           name="q" 
-          defaultValue={searchParams.q} 
+          defaultValue={resolvedParams.q} 
           placeholder="Search name, company, title..." 
           className="flex-1"
         />
-        <select name="date" className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white" defaultValue={searchParams.date}>
+        <select name="date" className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white" defaultValue={resolvedParams.date}>
           <option value="">Any Date</option>
           <option value="today">Today</option>
           <option value="week">This Week</option>
