@@ -9,42 +9,87 @@ export interface ParsedContact {
   linkedin?: string;
 }
 
+const JOB_TITLES = ['ceo', 'cto', 'cfo', 'coo', 'manager', 'director', 'engineer', 'developer', 'designer', 'founder', 'president', 'vp', 'vice president', 'head', 'lead', 'consultant', 'specialist', 'executive', 'officer', 'partner', 'associate', 'architect'];
+
 export function parseBusinessCard(text: string): ParsedContact {
   const result: ParsedContact = {};
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  
+  // Clean text and split into lines
+  const lines = text
+    .split('\n')
+    .map(l => l.trim().replace(/[^a-zA-Z0-9@.\-+\s:()]/g, '')) // Remove weird OCR artifacts but keep common symbols
+    .filter(l => l.length > 2);
 
-  // Email
-  const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-  if (emailMatch) result.email = emailMatch[0];
-
-  // Phone (simple heuristic)
-  const phoneMatch = text.match(/(?:(?:(\+?\d{1,3}[- ]?)?\(?(\d{3})\)?[- ]?)?\d{3}[- ]?\d{4})/);
-  if (phoneMatch) result.phone = phoneMatch[0];
-
-  // URL (exclude email domain)
-  const urls = text.match(/(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g);
-  if (urls) {
-    for (const url of urls) {
-      if (!url.includes('@') && !url.toLowerCase().includes('linkedin.com')) {
-        result.website = url;
-        break; // take first
-      }
+  // 1. Email extraction (most reliable)
+  const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i;
+  for (const line of lines) {
+    const match = line.match(emailRegex);
+    if (match) {
+      result.email = match[1].toLowerCase();
+      break;
     }
   }
 
-  // LinkedIn
-  const linkedinMatch = text.match(/linkedin\.com\/(in|company)\/[a-zA-Z0-9_-]+/i);
-  if (linkedinMatch) result.linkedin = linkedinMatch[0];
+  // 2. Phone extraction
+  const phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/;
+  for (const line of lines) {
+    const match = line.match(phoneRegex);
+    if (match) {
+      result.phone = match[0].replace(/[^\d+]/g, ''); // Clean to just numbers and +
+      break;
+    }
+  }
 
-  // Simplistic fallback for name and title (needs refinement)
-  if (lines.length > 0) {
-    const possibleName = lines.find(l => l.length > 3 && l.length < 30 && !l.includes('@') && !l.includes('www.'));
-    if (possibleName) {
-      const parts = possibleName.split(' ');
-      result.firstName = parts[0];
-      if (parts.length > 1) {
-        result.lastName = parts.slice(1).join(' ');
+  // 3. Website / URL extraction
+  const urlRegex = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?)/i;
+  for (const line of lines) {
+    if (line.toLowerCase().includes('linkedin')) {
+      result.linkedin = line;
+      continue;
+    }
+    const match = line.match(urlRegex);
+    if (match && !line.includes('@')) {
+      result.website = match[1].toLowerCase();
+    }
+  }
+
+  // 4. Identify Job Title
+  let titleIndex = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const lowerLine = lines[i].toLowerCase();
+    if (JOB_TITLES.some(title => lowerLine.includes(title))) {
+      result.jobTitle = lines[i];
+      titleIndex = i;
+      break;
+    }
+  }
+
+  // 5. Name extraction (Heuristics)
+  // The name is usually one of the first 3 lines, has 2-3 words, capitalized, and is NOT an email, phone, or title.
+  for (let i = 0; i < Math.min(4, lines.length); i++) {
+    const line = lines[i];
+    if (i === titleIndex) continue;
+    if (line.includes('@') || line.match(phoneRegex) || line.toLowerCase().includes('www')) continue;
+    
+    const words = line.split(' ');
+    // Most names are 2-3 words. If a word is all lowercase, it might be a bad OCR or website.
+    if (words.length >= 1 && words.length <= 4) {
+      // It's likely a name
+      result.firstName = words[0];
+      if (words.length > 1) {
+        result.lastName = words.slice(1).join(' ');
       }
+      break; // Found the name
+    }
+  }
+
+  // 6. Company extraction
+  // Often near the top or near the website/email domain
+  if (result.email) {
+    const domain = result.email.split('@')[1].split('.')[0];
+    if (domain !== 'gmail' && domain !== 'yahoo' && domain !== 'hotmail' && domain !== 'outlook') {
+      // Capitalize first letter of domain
+      result.company = domain.charAt(0).toUpperCase() + domain.slice(1);
     }
   }
 
