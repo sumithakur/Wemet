@@ -11,13 +11,13 @@ function ManualForm() {
   const searchParams = useSearchParams();
   const qr = searchParams.get('qr') || '';
   
-  let defaultFirstName = '';
-  let defaultLastName = '';
-  let defaultPhone = '';
-  let defaultEmail = '';
-  let defaultCompany = '';
-  let defaultTitle = '';
-  let defaultWebsite = '';
+  let defaultFirstName = searchParams.get('fn') || '';
+  let defaultLastName = searchParams.get('ln') || '';
+  let defaultPhone = searchParams.get('phone') || '';
+  let defaultEmail = searchParams.get('email') || '';
+  let defaultCompany = searchParams.get('company') || '';
+  let defaultTitle = searchParams.get('title') || '';
+  let defaultWebsite = searchParams.get('website') || '';
 
   if (qr.startsWith('BEGIN:VCARD') || qr.startsWith('MECARD:')) {
     const fnMatch = qr.match(/FN:(.*?)(?:\n|;)/);
@@ -57,9 +57,9 @@ function ManualForm() {
 
   return (
     <>
-      {qr && (
+      {(qr || searchParams.get('ocr')) && (
         <div className="bg-green-50 text-green-800 p-3 rounded-xl border border-green-200 text-sm">
-          {defaultFirstName || defaultWebsite ? '✓ Parsed details from QR code' : 'QR Code detected. Please verify details.'}
+          {defaultFirstName || defaultWebsite ? '✓ Parsed details from scan' : 'QR Code detected. Please verify details.'}
         </div>
       )}
 
