@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { createWorker } from 'tesseract.js';
 import { parseBusinessCard } from '@/lib/ocr/parser';
+import { parseCardWithAI } from '@/app/actions/ocr';
 
 export default function CardScannerPage() {
   const [status, setStatus] = useState<'idle' | 'processing' | 'done'>('idle');
@@ -14,30 +15,49 @@ export default function CardScannerPage() {
   const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     setStatus('processing');
-    setProgress('Initializing engine...');
     
     const file = e.target.files[0];
     const imgUrl = URL.createObjectURL(file);
+    
+    // Helper to convert file to base64
+    const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
 
     try {
-      const worker = await createWorker('eng', 1, {
-        logger: m => {
-          if (m.status === 'recognizing text') {
-            setProgress(`Reading text: ${Math.round(m.progress * 100)}%`);
+      setProgress('Analyzing with AI Vision Engine...');
+      
+      // Try Cloud AI (Gemini) first for 100% perfect accuracy
+      let parsed: any = null;
+      try {
+        const base64 = await toBase64(file);
+        parsed = await parseCardWithAI(base64, file.type);
+      } catch (aiError: any) {
+        // Fallback to local Tesseract if AI fails or no API key is set
+        console.warn("AI parsing failed or key missing, falling back to local OCR", aiError);
+        setProgress('AI key missing. Falling back to local OCR engine...');
+        
+        const worker = await createWorker('eng', 1, {
+          logger: m => {
+            if (m.status === 'recognizing text') {
+              setProgress(`Reading text: ${Math.round(m.progress * 100)}%`);
+            }
           }
-        }
-      });
-      
-      await worker.setParameters({
-        tessedit_pageseg_mode: 11 as any, // Sparse text mode (find as much text as possible in no particular order)
-      });
-      
-      setProgress('Analyzing business card...');
-      const { data: { text } } = await worker.recognize(imgUrl);
-      await worker.terminate();
-      
-      setProgress('Parsing details...');
-      const parsed = parseBusinessCard(text);
+        });
+        await worker.setParameters({
+          tessedit_pageseg_mode: 11 as any, // Sparse text mode
+        });
+        
+        setProgress('Analyzing business card...');
+        const { data: { text } } = await worker.recognize(imgUrl);
+        await worker.terminate();
+        
+        setProgress('Parsing details...');
+        parsed = parseBusinessCard(text);
+      }
       
       setStatus('done');
       
